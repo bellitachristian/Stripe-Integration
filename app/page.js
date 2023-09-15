@@ -1,95 +1,87 @@
-import Image from 'next/image'
-import styles from './page.module.css'
+'use client'
+
+import './page.module.css'
+import { useEffect, useMemo, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import 'react-toastify/dist/ReactToastify.css';
+import {ToastContainer, toast } from 'react-toastify';
+
 
 export default function Home() {
+  const router = useRouter();
+  const [productPricesList, setProductPricesList] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [params, setParams] = useState('');
+  const searchParams = useSearchParams()
+
+  useEffect(()=>{
+    fetchProducts();
+  },[])
+
+  const fetchProducts = async() =>{
+    const response = await fetch("http://localhost:3000/api/products")
+    const productPricesList = await response.json();
+    setProductPricesList(productPricesList);
+  }
+  
+  const handlebtnClick = async (e) =>{
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const request = await fetch("http://localhost:3000/api/checkout", {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          'productPrice': productPricesList[0].id
+        })
+      });
+  
+      if (!request.ok) {
+        throw new Error('Request failed');
+      }
+  
+      const response = await request.json();
+      router.push(response)
+
+    } catch (error) {
+      console.error('Error:', error);
+      setLoading(false);
+    } finally {
+      setLoading(false); 
+    }
+  }
+
+  const showSuccess= () =>{
+    toast.success('Payment Successful')
+  }
+  const showCancelled= () =>{
+    toast.error('Payment Cancelledllyyy')
+  }
+
+  useEffect(()=>{
+      setParams(searchParams.get('status'));
+  },[handlebtnClick])
+
+  useMemo(() => {
+    if (params === 'success') {
+      showSuccess(); 
+    }else if(params == 'cancel'){
+      showCancelled(); 
+    }else{
+      return
+    }
+  }, [params]);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>app/page.js</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{' '}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
-            />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore the Next.js 13 playground.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
-    </main>
-  )
+   <div>
+      <section className='main'>
+        <h2>Stripe Integration</h2>
+        <button type='button' onClick={handlebtnClick} className='checkout_btn'>{loading ? 'Checking out...' : 'Checkout'}</button>
+        <ToastContainer/>
+      </section>
+   </div>
+  ) 
 }
