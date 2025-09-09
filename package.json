@@ -18,5 +18,8 @@
     "react-toastify": "^9.1.3",
     "stripe": "^13.5.0",
     "toastr": "^2.1.4"
+  },
+  "devDependencies": {
+    "@types/react": "19.1.12"
   }
 }
